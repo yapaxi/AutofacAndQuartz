@@ -34,16 +34,26 @@ namespace ClassLibrary9
 
         static Class1()
         {
-            _builder = new ContainerBuilder();
-            _builder.RegisterModule<QuartzModule>();
+            try
+            {
+                _builder = new ContainerBuilder();
+                _builder.RegisterModule<QuartzModule>();
 
-            _builder.RegisterType<SomeCreator>().As<ICreator1>();
-            _builder.RegisterType<SomeCreator>().As<ICreator2>();
 
-            _builder.Register(CreateCtor<Marketplace, ICreator1>());
-            _builder.Register(CreateCtor<Marketplace, ICreator2>());
+                _builder.RegisterType<Repository>().InstancePerLifetimeScope();
+                _builder.RegisterType<Creator1>().As<ICreator1>();
+                _builder.RegisterType<Creator2>().As<ICreator2>();
 
-            Container = _builder.Build();
+                _builder.Register(CreateCtor<Marketplace, ICreator1>());
+                _builder.Register(CreateCtor<Marketplace, ICreator2>());
+
+                Container = _builder.Build();
+            }
+            catch (Exception e)
+            {
+
+                throw;
+            }
         }
 
         public static void Main(string[] args)
@@ -66,7 +76,7 @@ namespace ClassLibrary9
             var trigger = TriggerBuilder.Create()
                .StartNow()
                .WithSimpleSchedule(schedule => schedule
-                   .WithIntervalInSeconds(1)
+                   .WithIntervalInSeconds(5)
                    .RepeatForever())
                .Build();
 
@@ -177,32 +187,62 @@ namespace ClassLibrary9
         }
     }
 
-    public interface ICreator1 : IDisposable { int Do(int x); }
-    public interface ICreator2 : IDisposable { string Do(int x); }
+    public interface ICreator1  { int Do(int x); }
+    public interface ICreator2  { string Do(int x); }
 
-    public class SomeCreator : ICreator1, ICreator2
+    public class Creator1 : ICreator1
     {
+        private readonly Repository _repo;
         private readonly Marketplace _marketplace;
 
-        public SomeCreator(Marketplace marketplaceId)
+        public Creator1(Repository repo, Marketplace marketplaceId)
         {
             _marketplace = marketplaceId;
+            _repo = repo;
             Console.WriteLine($"{this.GetType().Name} .ctor: {_marketplace}");
         }
 
-        int ICreator1.Do(int x)
+        public int Do(int x)
         {
+            _repo.DoSomething();
             return x * 2;
         }
+    }
 
-        string ICreator2.Do(int x)
+    public class Creator2 : ICreator2
+    {
+        private readonly Marketplace _marketplace;
+        private readonly Repository _repo;
+
+        public Creator2(Repository repo, Marketplace marketplaceId)
         {
+            _repo = repo;
+            _marketplace = marketplaceId;
+            Console.WriteLine($"{this.GetType().Name} .ctor: {_marketplace}");
+        }
+        
+        public string Do(int x)
+        {
+            _repo.DoSomething();
             return x.ToString();
         }
+    }
 
+    public class Repository : IDisposable
+    {
         public void Dispose()
         {
-            Console.WriteLine($"{this.GetType().Name} Dispose");
+            Console.WriteLine("Repo disposed");
+        }
+
+        public Repository()
+        {
+            Console.WriteLine("-----------------\nRepo created");
+        }
+
+        public void DoSomething()
+        {
+            Console.WriteLine("Something done");
         }
     }
 }
