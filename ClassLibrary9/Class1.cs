@@ -230,14 +230,16 @@ namespace ClassLibrary9
 
     public class Repository : IDisposable
     {
+        public Guid Guid = Guid.NewGuid();
+
         public void Dispose()
         {
-            Console.WriteLine("Repo disposed");
+            Console.WriteLine($"Repo disposed: {Guid}");
         }
 
         public Repository()
         {
-            Console.WriteLine("-----------------\nRepo created");
+            Console.WriteLine($"-----------------\nRepo created: {Guid}");
         }
 
         public void DoSomething()
